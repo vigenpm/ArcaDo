@@ -183,7 +183,7 @@ def init():
     global hearts_kol
     hearts_kol = 3
     global level
-    level = 5
+    level = 1
     global enemy_kol
     enemy_kol = 0
     global enemy_kol_killed
