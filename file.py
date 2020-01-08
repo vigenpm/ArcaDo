@@ -102,6 +102,8 @@ class EnemyLight(pygame.sprite.Sprite):
         self.image.set_alpha(255 * (self.health / 20))
         if self.health <= 0:
             enemy_kol_killed += 1
+            death.set_volume(0.3)
+            death.play()
             self.kill()
         if self.rect.y >= 450:
             global hearts_kol
@@ -123,6 +125,8 @@ class EnemyMiddle(pygame.sprite.Sprite):
         self.image.set_alpha(255 * (self.health / 30))
         if self.health <= 0:
             enemy_kol_killed += 1
+            death.set_volume(0.6)
+            death.play()
             self.kill()
         if self.rect.y >= 450:
             global hearts_kol
@@ -144,6 +148,8 @@ class EnemyHard(pygame.sprite.Sprite):
         self.image.set_alpha(255 * (self.health / 50))
         if self.health <= 0:
             enemy_kol_killed += 1
+            death.set_volume(1)
+            death.play()
             self.kill()
         if self.rect.y >= 450:
             global hearts_kol
@@ -190,6 +196,14 @@ def init():
     enemy_kol_killed = 0
     global first_time_game_start
     first_time_game_start = 0
+    global first_time_next_level
+    first_time_next_level = 0
+    global first_time_start_page
+    first_time_start_page = 1
+    global first_time_you_won
+    first_time_you_won = 0
+    global first_time_game_over
+    first_time_game_over = 0
 
 
 pygame.init()
@@ -217,10 +231,35 @@ level = 1
 enemy_kol = 0
 enemy_kol_killed = 0
 first_time_game_start = 0
+first_time_next_level = 0
+first_time_start_page = 1
+first_time_game_over = 0
+first_time_you_won = 0
+
+boom = pygame.mixer.Sound('boom.wav')
+boom.set_volume(0.1)
+death = pygame.mixer.Sound('death.wav')
+game_music = pygame.mixer.Sound('music.wav')
+game_music.set_volume(0.3)
+next_level_music = pygame.mixer.Sound('nextLevel.wav')
+next_level_music.set_volume(0.5)
+game_start_music = pygame.mixer.Sound('gameStart.wav')
+game_start_music.set_volume(0.5)
+you_won_music = pygame.mixer.Sound('youWon.wav')
+you_won_music.set_volume(0.5)
+game_over_music = pygame.mixer.Sound('gameOver.wav')
+game_over_music.set_volume(0.5)
 
 while running:
     if st == 3:
+        game_music.stop()
+        next_level_music.stop()
+        game_start_music.stop()
         all_sprites.empty()
+        you_won_music.stop()
+        if first_time_game_over == 1:
+            game_over_music.play(-1)
+            first_time_game_over = 0
         screen.fill((0, 0, 0))
         GameOver()
         for event in pygame.event.get():
@@ -232,6 +271,13 @@ while running:
                     st = 1
         all_sprites.draw(screen)
     elif st == 5:
+        game_music.stop()
+        next_level_music.stop()
+        game_start_music.stop()
+        game_over_music.stop()
+        if first_time_you_won == 1:
+            you_won_music.play(-1)
+            first_time_you_won = 0
         all_sprites.empty()
         screen.fill((0, 0, 0))
         YouWon()
@@ -244,6 +290,13 @@ while running:
                     st = 1
         all_sprites.draw(screen)
     elif st == 1:
+        game_music.stop()
+        you_won_music.stop()
+        next_level_music.stop()
+        game_over_music.stop()
+        if first_time_start_page == 1:
+            game_start_music.play(-1)
+            first_time_start_page = 0
         all_sprites.empty()
         screen.fill((0, 0, 0))
         GameStart()
@@ -257,6 +310,13 @@ while running:
                     first_time_game_start = 1
         all_sprites.draw(screen)
     elif st == 4:
+        game_music.stop()
+        game_start_music.stop()
+        you_won_music.stop()
+        game_over_music.stop()
+        if first_time_next_level == 1:
+            next_level_music.play(-1)
+            first_time_next_level = 0
         all_sprites.empty()
         screen.fill((0, 0, 0))
         NextLevel()
@@ -272,6 +332,10 @@ while running:
                     first_time_game_start = 1
         all_sprites.draw(screen)
     else:
+        next_level_music.stop()
+        game_start_music.stop()
+        you_won_music.stop()
+        game_over_music.stop()
         player.update()
         enemy_tick += 1
         for i in ball_group:
@@ -280,12 +344,11 @@ while running:
             i.update()
         # print(level)
         # print(enemy_kol_killed)
-        if hearts_kol <= 0:
-            st = 3
         if level == 1:
             if enemy_kol >= 40 and enemy_kol_killed >= 40:
                 level = 2
                 st = 4
+                first_time_next_level = 1
             if enemy_tick % 60 == 0 and enemy_kol < 40:
                 enemy = EnemyLight(random.randrange(110, 450), 10)
                 if pygame.sprite.spritecollideany(enemy, enemy_group) \
@@ -297,6 +360,7 @@ while running:
             if enemy_kol >= 60 and enemy_kol_killed >= 60:
                 level = 3
                 st = 4
+                first_time_next_level = 1
             if enemy_tick % 50 == 0 and enemy_kol < 60:
                 enemy = EnemyLight(random.randrange(110, 450), 10)
                 if pygame.sprite.spritecollideany(enemy, enemy_group) \
@@ -315,6 +379,7 @@ while running:
             if enemy_kol >= 90 and enemy_kol_killed >= 90:
                 level = 4
                 st = 4
+                first_time_next_level = 1
             if enemy_tick % 45 == 0 and enemy_kol < 90:
                 enemy = EnemyLight(random.randrange(110, 450), 10)
                 if pygame.sprite.spritecollideany(enemy, enemy_group) \
@@ -333,6 +398,7 @@ while running:
             if enemy_kol >= 120 and enemy_kol_killed >= 120:
                 level = 5
                 st = 4
+                first_time_next_level = 1
             if enemy_tick % 45 == 0 and enemy_kol < 120:
                 enemy = EnemyLight(random.randrange(110, 450), 10)
                 if pygame.sprite.spritecollideany(enemy, enemy_group) \
@@ -357,6 +423,7 @@ while running:
         elif level == 5:
             if enemy_kol >= 150 and enemy_kol_killed >= 150:
                 st = 5
+                first_time_you_won = 1
             if enemy_tick % 40 == 0 and enemy_kol < 150:
                 enemy = EnemyLight(random.randrange(110, 450), 10)
                 if pygame.sprite.spritecollideany(enemy, enemy_group) \
@@ -389,6 +456,7 @@ while running:
             if pygame.sprite.spritecollideany(ball, ball_group) \
                     and pygame.sprite.spritecollideany(ball, ball_group) is not ball:
                 ball.kill()
+            boom.play()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -400,6 +468,7 @@ while running:
                 if event.key == pygame.K_SPACE:
                     f2 = 1
                     Ball(5, player.rect.x + 10, player.rect.y)
+                    boom.play()
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                     f1 = 0
@@ -414,6 +483,10 @@ while running:
             all_sprites.add(Quit())
             all_sprites.add(Level())
             first_time_game_start = 0
+            game_music.play(-1)
+        if hearts_kol <= 0:
+            st = 3
+            first_time_game_over = 1
         pygame.draw.rect(screen, (50, 50, 50), (0, 0, 110, 500))
         pygame.draw.line(screen, (255, 255, 255), (10, 50), (100, 50))
         font = pygame.font.SysFont('comicsansms', 28)
