@@ -203,7 +203,7 @@ def init():
     global hearts_kol
     hearts_kol = 3
     global level
-    level = 1
+    level = 5
     global enemy_kol
     enemy_kol = 0
     global enemy_kol_killed
@@ -370,15 +370,15 @@ while running:
             game_music.play(-1)
             tick = 0
             if level == 1:
-                bullets = 200
+                bullets = 180
             elif level == 2:
-                bullets = 320
+                bullets = 230
             elif level == 3:
-                bullets = 370
+                bullets = 300
             elif level == 4:
-                bullets = 450
+                bullets = 380
             elif level == 5:
-                bullets = 500
+                bullets = 420
         next_level_music.stop()
         game_start_music.stop()
         you_won_music.stop()
