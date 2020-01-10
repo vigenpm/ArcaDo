@@ -14,11 +14,11 @@ def load_image2(name):
 
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, radius, x, y):
+    def __init__(self, radius, x, y, color):
         super().__init__(ball_group, all_sprites)
         self.radius = radius
         self.image = pygame.Surface((2 * radius, 2 * radius), pygame.SRCALPHA, 32)
-        pygame.draw.circle(self.image, (72, 1, 255), (radius, radius), radius)
+        pygame.draw.circle(self.image, color, (radius, radius), radius)
         self.rect = pygame.Rect(x, y, 2 * radius, 2 * radius)
 
     def update(self):
@@ -70,6 +70,20 @@ class Level(pygame.sprite.Sprite):
         super().__init__(all_sprites)
         self.image = load_image2('level.png')
         self.rect = (10, 55)
+
+
+class Bullets(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = load_image2('bullets.png')
+        self.rect = (10, 155)
+
+
+class Boost(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.image = load_image2('boost.png')
+        self.rect = (10, 250)
 
 
 class Player(pygame.sprite.Sprite):
@@ -204,6 +218,12 @@ def init():
     first_time_you_won = 0
     global first_time_game_over
     first_time_game_over = 0
+    global bullets
+    bullets = 0
+    global boost
+    boost = False
+    global boost_start
+    boost_start = 0
 
 
 pygame.init()
@@ -228,6 +248,7 @@ f2_tick = 0
 enemy_tick = 0
 hearts_kol = 3
 level = 1
+bullets = 0
 enemy_kol = 0
 enemy_kol_killed = 0
 first_time_game_start = 0
@@ -235,6 +256,11 @@ first_time_next_level = 0
 first_time_start_page = 1
 first_time_game_over = 0
 first_time_you_won = 0
+tick = 10
+boosts = 3
+boost = False
+boost_start = 0
+boost_length = 3
 
 boom = pygame.mixer.Sound('boom.wav')
 boom.set_volume(0.1)
@@ -251,6 +277,7 @@ game_over_music = pygame.mixer.Sound('gameOver.wav')
 game_over_music.set_volume(0.5)
 
 while running:
+    tick += 1
     if st == 3:
         game_music.stop()
         next_level_music.stop()
@@ -267,7 +294,6 @@ while running:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if 360 > event.pos[0] > 130 and 400 > event.pos[1] > 350:
-                    init()
                     st = 1
         all_sprites.draw(screen)
     elif st == 5:
@@ -286,7 +312,6 @@ while running:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if 360 > event.pos[0] > 130 and 400 > event.pos[1] > 350:
-                    init()
                     st = 1
         all_sprites.draw(screen)
     elif st == 1:
@@ -307,6 +332,7 @@ while running:
                 if 300 > event.pos[0] > 200 and 400 > event.pos[1] > 350:
                     st = 2
                     init()
+                    boosts = 3
                     first_time_game_start = 1
         all_sprites.draw(screen)
     elif st == 4:
@@ -332,6 +358,27 @@ while running:
                     first_time_game_start = 1
         all_sprites.draw(screen)
     else:
+        if tick - boost_start >= boost_length * 100:
+            boost = False
+            boost_start = 0
+        if first_time_game_start == 1:
+            all_sprites.add(Quit())
+            all_sprites.add(Level())
+            all_sprites.add(Bullets())
+            all_sprites.add(Boost())
+            first_time_game_start = 0
+            game_music.play(-1)
+            tick = 0
+            if level == 1:
+                bullets = 200
+            elif level == 2:
+                bullets = 320
+            elif level == 3:
+                bullets = 370
+            elif level == 4:
+                bullets = 450
+            elif level == 5:
+                bullets = 500
         next_level_music.stop()
         game_start_music.stop()
         you_won_music.stop()
@@ -451,12 +498,15 @@ while running:
             player.rect.x += 5
         if f2 == 1:
             f2_tick += 1
-        if f2_tick != 0 and f2_tick % 8 == 0:
-            ball = Ball(5, player.rect.x + 10, player.rect.y)
-            if pygame.sprite.spritecollideany(ball, ball_group) \
-                    and pygame.sprite.spritecollideany(ball, ball_group) is not ball:
-                ball.kill()
-            boom.play()
+        if f2_tick != 0 and f2_tick % 10 == 0:
+            if bullets > 0 and not boost:
+                ball = Ball(5, player.rect.x + 10, player.rect.y, (72, 1, 255))
+                if pygame.sprite.spritecollideany(ball, ball_group) \
+                        and pygame.sprite.spritecollideany(ball, ball_group) is not ball:
+                    ball.kill()
+                else:
+                    boom.play()
+                    bullets -= 1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -466,9 +516,16 @@ while running:
                 if event.key == pygame.K_LEFT:
                     f1 = 1
                 if event.key == pygame.K_SPACE:
-                    f2 = 1
-                    Ball(5, player.rect.x + 10, player.rect.y)
-                    boom.play()
+                    if bullets > 0 and not boost:
+                        f2 = 1
+                        Ball(5, player.rect.x + 10, player.rect.y, (72, 1, 255))
+                        boom.play()
+                        bullets -= 1
+                if event.key == pygame.K_b:
+                    if not boost and boosts > 0:
+                        boost = True
+                        boost_start = tick
+                        boosts -= 1
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                     f1 = 0
@@ -478,26 +535,36 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if 90 > event.pos[0] > 10 and 500 > event.pos[1] > 450:
                     st = 1
-        screen.fill((0, 0, 0))
-        if first_time_game_start == 1:
-            all_sprites.add(Quit())
-            all_sprites.add(Level())
-            first_time_game_start = 0
-            game_music.play(-1)
         if hearts_kol <= 0:
             st = 3
             first_time_game_over = 1
-        pygame.draw.rect(screen, (50, 50, 50), (0, 0, 110, 500))
-        pygame.draw.line(screen, (255, 255, 255), (10, 50), (100, 50))
-        font = pygame.font.SysFont('comicsansms', 28)
-        text = font.render(str(level), 1, (255, 255, 255))
-        text_x = 55 - text.get_width() // 2
-        screen.blit(text, (text_x, 105))
-        hearts_group.empty()
-        hearts_margin = (90 - hearts_kol * 30) // (hearts_kol + 1)
-        for i in range(1, hearts_kol + 1):
-            Heart(hearts_margin * i + 30 * i - 20, 10)
-        hearts_group.draw(screen)
-        all_sprites.draw(screen)
+        pygame.draw.rect(screen, (0, 0, 0), (110, 0, 500, 500))
+        if boost and tick % 5 == 0:
+            boom.play()
+            Ball(5, player.rect.x + 10, player.rect.y, (100, 255, 100))
+        if boost:
+            text = pygame.font.SysFont('comicsansms', 40).render(str(boost_length - (tick - boost_start) // 100), 1,
+                                                                 (255, 255, 255))
+            surface = pygame.Surface((500, 500), pygame.SRCALPHA)
+            surface.blit(text, (0, 0))
+            screen.blit(surface, (470 - text.get_width() // 2, 20))
+        if tick % 10 == 0:
+            pygame.draw.rect(screen, (50, 50, 50), (0, 0, 110, 500))
+            pygame.draw.line(screen, (255, 255, 255), (10, 50), (100, 50))
+            pygame.draw.line(screen, (255, 255, 255), (10, 150), (100, 150))
+            pygame.draw.line(screen, (255, 255, 255), (10, 250), (100, 250))
+            font = pygame.font.SysFont('comicsansms', 28)
+            text = font.render(str(level), 1, (255, 255, 255))
+            screen.blit(text, (55 - text.get_width() // 2, 105))
+            text = font.render(str(bullets), 1, (255, 255, 255))
+            screen.blit(text, (55 - text.get_width() // 2, 200))
+            text = font.render(str(boosts), 1, (255, 255, 255))
+            screen.blit(text, (55 - text.get_width() // 2, 290))
+            hearts_group.empty()
+            hearts_margin = (90 - hearts_kol * 30) // (hearts_kol + 1)
+            for i in range(1, hearts_kol + 1):
+                Heart(hearts_margin * i + 30 * i - 20, 10)
+            hearts_group.draw(screen)
+    all_sprites.draw(screen)
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(70)
